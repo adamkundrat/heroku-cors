@@ -1,25 +1,14 @@
-var http = require('http'),
-    request = require('request');
+import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
+const app = express();
 
-var host = process.env.TARGET;
-
-var app = http.createServer(function (req, resp) {
-
-  if(!host){
-    return resp.end("No host set, `heroku config:add TARGET=http://t.com`");
-  }
-
-  resp.setHeader("Access-Control-Allow-Origin", "*");
-  resp.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
-
-  request({
-    url:host + req.url
-  }).pipe(resp);
-
-});
-
-var port = process.env.PORT || 5000;
-app.listen(port, function() {
-  console.log("Listening on " + port);
-});
+app.use('/', createProxyMiddleware({ 
+    target: 'https://explorer-api.iota.org', 
+    changeOrigin: true, 
+    onProxyRes: function (proxyRes) {
+        proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+    },
+    logLevel: 'debug' 
+}));
+app.listen(process.env.PORT || 5000);
